@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Demonstration Code &#8212; Functional SQL  documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d1102ebc" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=12dfc556" />
+    <script src="_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="_static/doctools.js?v=9a2dae69"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Notes" href="notes.html" />
+    <link rel="prev" title="funcsql Code" href="funcsql.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="demonstration-code">
+<span id="demo"></span><h1>Demonstration Code<a class="headerlink" href="#demonstration-code" title="Link to this heading">¶</a></h1>
+<section id="example-1">
+<h2>Example 1<a class="headerlink" href="#example-1" title="Link to this heading">¶</a></h2>
+<p>Some imports</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span> <span class="nn">csv</span> <span class="kn">import</span> <span class="n">DictReader</span>
+<span class="kn">from</span> <span class="nn">statistics</span> <span class="kn">import</span> <span class="n">mean</span><span class="p">,</span> <span class="n">stdev</span>
+
+<span class="kn">from</span> <span class="nn">funcsql</span> <span class="kn">import</span> <span class="o">*</span>
+</pre></div>
+</div>
+<p>Read the raw data file.
+This function simply returns the list of dictionaries from the <code class="docutils literal notranslate"><span class="pre">csv.DictReader</span></code>.
+The columns aren’t useful as shown.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">DEFAULT_PATH</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;tests&quot;</span><span class="p">)</span> <span class="o">/</span> <span class="s2">&quot;Anscombe_quartet_data.csv&quot;</span>
+
+
+<span class="k">def</span> <span class="nf">get_series</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">DEFAULT_PATH</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get all four series.</span>
+
+<span class="sd">    :param path: source path</span>
+<span class="sd">    :return: a list of dictionaries with keys &quot;series&quot;, &quot;x&quot;, and &quot;y&quot;.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="k">as</span> <span class="n">source_file</span><span class="p">:</span>
+        <span class="n">rdr</span> <span class="o">=</span> <span class="n">DictReader</span><span class="p">(</span><span class="n">source_file</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">rdr</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The column names are x123, y1, y2, y3, x4, and y4, which require restructuring.</p>
+<p>We want a table like the following:</p>
+<p class="plantuml">
+<img src="_images/plantuml-59bbce50eeae0459c7b6ea9bbf846bf1372ee169.png" alt="&#64;startuml
+hide methods
+hide circle
+
+class Anscombe {
+    series: int
+    x: float
+    y: float
+}
+&#64;enduml"/>
+</p>
+<p>There are four series, each use a subset of columns:</p>
+<ul class="simple">
+<li><p>{series: 1, x: x123, y: y1}</p></li>
+<li><p>{series: 2, x: x123, y: y2}</p></li>
+<li><p>{series: 3, x: x123, y: y3}</p></li>
+<li><p>{series: 4, x: x4, y: y4}</p></li>
+</ul>
+<p>One way to restructure this is a <code class="docutils literal notranslate"><span class="pre">UNION</span></code> of four queries.</p>
+<div class="highlight-SQL notranslate"><div class="highlight"><pre><span></span><span class="k">SELECT</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="n">x123</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">y1</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">y</span>
+<span class="k">FROM</span><span class="w"> </span><span class="n">raw</span>
+<span class="k">UNION</span>
+<span class="k">SELECT</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="n">x123</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">y2</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">y</span>
+<span class="k">FROM</span><span class="w"> </span><span class="n">raw</span>
+<span class="k">UNION</span>
+<span class="k">SELECT</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span><span class="w"> </span><span class="n">x123</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">y3</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">y</span>
+<span class="k">FROM</span><span class="w"> </span><span class="n">raw</span>
+<span class="k">UNION</span>
+<span class="k">SELECT</span><span class="w"> </span><span class="mi">4</span><span class="p">,</span><span class="w"> </span><span class="n">x4</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">y4</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">y</span>
+<span class="k">FROM</span><span class="w"> </span><span class="n">raw</span>
+</pre></div>
+</div>
+<p>We can do this as follows without the overhead of creating and loading one table
+that we’ll used to create a second table.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">restructure</span><span class="p">(</span><span class="n">sample_rows</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Row</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Transform the mish-mash of columns to a series number, and x, y values.</span>
+
+<span class="sd">    :param samples: the raw results of the CSV ``DictReader``.</span>
+<span class="sd">    :return: A list of ``Row`` instances.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">samples</span> <span class="o">=</span> <span class="n">Table</span><span class="p">(</span><span class="s2">&quot;samples&quot;</span><span class="p">,</span> <span class="n">sample_rows</span><span class="p">)</span>
+
+    <span class="n">q1</span> <span class="o">=</span> <span class="n">Select</span><span class="p">(</span>
+        <span class="n">series</span><span class="o">=</span><span class="k">lambda</span> <span class="n">qc</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="n">x</span><span class="o">=</span><span class="k">lambda</span> <span class="n">qc</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">qc</span><span class="o">.</span><span class="n">samples</span><span class="o">.</span><span class="n">x123</span><span class="p">),</span>
+        <span class="n">y</span><span class="o">=</span><span class="k">lambda</span> <span class="n">qc</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">qc</span><span class="o">.</span><span class="n">samples</span><span class="o">.</span><span class="n">y1</span><span class="p">),</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">from_</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span>
+    <span class="n">q2</span> <span class="o">=</span> <span class="n">Select</span><span class="p">(</span>
+        <span class="n">series</span><span class="o">=</span><span class="k">lambda</span> <span class="n">qc</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+        <span class="n">x</span><span class="o">=</span><span class="k">lambda</span> <span class="n">qc</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">qc</span><span class="o">.</span><span class="n">samples</span><span class="o">.</span><span class="n">x123</span><span class="p">),</span>
+        <span class="n">y</span><span class="o">=</span><span class="k">lambda</span> <span class="n">qc</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">qc</span><span class="o">.</span><span class="n">samples</span><span class="o">.</span><span class="n">y2</span><span class="p">),</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">from_</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span>
+    <span class="n">q3</span> <span class="o">=</span> <span class="n">Select</span><span class="p">(</span>
+        <span class="n">series</span><span class="o">=</span><span class="k">lambda</span> <span class="n">qc</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+        <span class="n">x</span><span class="o">=</span><span class="k">lambda</span> <span class="n">qc</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">qc</span><span class="o">.</span><span class="n">samples</span><span class="o">.</span><span class="n">x123</span><span class="p">),</span>
+        <span class="n">y</span><span class="o">=</span><span class="k">lambda</span> <span class="n">qc</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">qc</span><span class="o">.</span><span class="n">samples</span><span class="o">.</span><span class="n">y3</span><span class="p">),</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">from_</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span>
+    <span class="n">q4</span> <span class="o">=</span> <span class="n">Select</span><span class="p">(</span>
+        <span class="n">series</span><span class="o">=</span><span class="k">lambda</span> <span class="n">qc</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
+        <span class="n">x</span><span class="o">=</span><span class="k">lambda</span> <span class="n">qc</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">qc</span><span class="o">.</span><span class="n">samples</span><span class="o">.</span><span class="n">x4</span><span class="p">),</span>
+        <span class="n">y</span><span class="o">=</span><span class="k">lambda</span> <span class="n">qc</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">qc</span><span class="o">.</span><span class="n">samples</span><span class="o">.</span><span class="n">y4</span><span class="p">),</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">from_</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span>
+
+    <span class="n">rows</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="nb">list</span><span class="p">(</span><span class="n">fetch</span><span class="p">(</span><span class="n">q1</span><span class="p">))</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="n">fetch</span><span class="p">(</span><span class="n">q2</span><span class="p">))</span>
+        <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="n">fetch</span><span class="p">(</span><span class="n">q3</span><span class="p">))</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="n">fetch</span><span class="p">(</span><span class="n">q4</span><span class="p">))</span>
+    <span class="p">)</span>
+</pre></div>
+</div>
+<p>The real goal is to compute some descriptive statistics after restructuring the data.</p>
+<div class="highlight-SQL notranslate"><div class="highlight"><pre><span></span><span class="k">SELECT</span><span class="w"> </span><span class="n">series</span><span class="p">,</span><span class="w"> </span><span class="n">MEAN</span><span class="p">(</span><span class="n">x</span><span class="p">),</span><span class="w"> </span><span class="n">MEAN</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+<span class="k">FROM</span><span class="w"> </span><span class="n">anscombe</span>
+<span class="k">GROUP</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">series</span>
+</pre></div>
+</div>
+<p>The query is a bit longer, but (again) doesn’t involve the overhead of loading table.
+Or – in this example – loading one table with raw data and then inserting into
+another table to restructure the data.</p>
+<p>We’ve highlighted the <a class="reference internal" href="funcsql.html#funcsql.Select" title="funcsql.Select"><code class="xref py py-class docutils literal notranslate"><span class="pre">funcsql.Select</span></code></a> that corresponds to the statistics query.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">restructure</span><span class="p">(</span><span class="n">get_series</span><span class="p">())</span>
+    <span class="n">anscombe</span> <span class="o">=</span> <span class="n">Table</span><span class="o">.</span><span class="n">from_rows</span><span class="p">(</span><span class="s2">&quot;anscombe&quot;</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Series I&quot;</span><span class="p">)</span>
+    <span class="n">query</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">Select</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="k">lambda</span> <span class="n">qc</span><span class="p">:</span> <span class="n">qc</span><span class="o">.</span><span class="n">anscombe</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="k">lambda</span> <span class="n">qc</span><span class="p">:</span> <span class="n">qc</span><span class="o">.</span><span class="n">anscombe</span><span class="o">.</span><span class="n">y</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">from_</span><span class="p">(</span><span class="n">anscombe</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="k">lambda</span> <span class="n">qc</span><span class="p">:</span> <span class="n">qc</span><span class="o">.</span><span class="n">anscombe</span><span class="o">.</span><span class="n">series</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">fetch</span><span class="p">(</span><span class="n">query</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">r</span><span class="o">.</span><span class="n">x</span><span class="si">:</span><span class="s2">6.2f</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">r</span><span class="o">.</span><span class="n">y</span><span class="si">:</span><span class="s2">6.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Means&quot;</span><span class="p">)</span>
+    <span class="n">stats_query</span> <span class="o">=</span> <span class="p">(</span>
+<span class="hll">        <span class="n">Select</span><span class="p">(</span>
+</span><span class="hll">            <span class="n">mean_x</span><span class="o">=</span><span class="n">Aggregate</span><span class="p">(</span><span class="n">mean</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">qc</span><span class="p">:</span> <span class="n">qc</span><span class="o">.</span><span class="n">anscombe</span><span class="o">.</span><span class="n">x</span><span class="p">),</span>
+</span><span class="hll">            <span class="n">mean_y</span><span class="o">=</span><span class="n">Aggregate</span><span class="p">(</span><span class="n">mean</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">qc</span><span class="p">:</span> <span class="n">qc</span><span class="o">.</span><span class="n">anscombe</span><span class="o">.</span><span class="n">y</span><span class="p">)</span>
+</span><span class="hll">        <span class="p">)</span>
+</span><span class="hll">        <span class="o">.</span><span class="n">from_</span><span class="p">(</span><span class="n">anscombe</span><span class="p">)</span>
+</span><span class="hll">        <span class="o">.</span><span class="n">group_by</span><span class="p">(</span><span class="n">series</span><span class="o">=</span><span class="k">lambda</span> <span class="n">qc</span><span class="p">:</span> <span class="n">qc</span><span class="o">.</span><span class="n">anscombe</span><span class="o">.</span><span class="n">series</span><span class="p">)</span>
+</span>    <span class="p">)</span>
+    <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">fetch</span><span class="p">(</span><span class="n">stats_query</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">r</span><span class="o">.</span><span class="n">series</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">r</span><span class="o">.</span><span class="n">mean_x</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">r</span><span class="o">.</span><span class="n">mean_y</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This does the same processing without the conceptual overheads of table schema,
+or other SQL complications like connections and commits.</p>
+</section>
+<section id="example-2">
+<h2>Example 2<a class="headerlink" href="#example-2" title="Link to this heading">¶</a></h2>
+<p>TBD</p>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">Functional SQL</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="concept.html">Concept</a></li>
+<li class="toctree-l1"><a class="reference internal" href="components.html">Components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="funcsql.html">funcsql Code</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Demonstration Code</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#example-1">Example 1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#example-2">Example 2</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="notes.html">Notes</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="funcsql.html" title="previous chapter">funcsql Code</a></li>
+      <li>Next: <a href="notes.html" title="next chapter">Notes</a></li>
+  </ul></li>
+</ul>
+</div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2024, S.Lott.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.3.7</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+      |
+      <a href="_sources/demo.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

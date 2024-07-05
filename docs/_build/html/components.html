@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Components &#8212; Functional SQL  documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d1102ebc" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=12dfc556" />
+    <script src="_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="_static/doctools.js?v=9a2dae69"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="funcsql Code" href="funcsql.html" />
+    <link rel="prev" title="Concept" href="concept.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="components">
+<h1>Components<a class="headerlink" href="#components" title="Link to this heading">¶</a></h1>
+<p>This isn’t in PYPI, so you can’t simply PIP-install it.</p>
+<p>You need to clone the GitHub repo.
+There are two ways to make use of this:</p>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">pip</span> <span class="pre">install</span> <span class="pre">-e</span> <span class="pre">/path/to/src</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">export</span> <span class="pre">PYTHONPATH=/path/to/src</span></code></p></li>
+</ol>
+<p>Both work. Choose one.</p>
+<p>Your applications will look like this.</p>
+<p class="plantuml">
+<img src="_images/plantuml-3c957ff7f6df79a307e432278f2622dcf867a9c1.png" alt="&#64;startuml
+
+[my app]
+[funcsql]
+
+[my app] --&gt; [funcsql] : imports
+
+&#64;enduml"/>
+</p>
+<p>That’s about it.  We’ll look at app code in the <a class="reference internal" href="demo.html#demo"><span class="std std-ref">Demonstration Code</span></a> section.</p>
+<p>We’ll look at the <code class="xref py py-mod docutils literal notranslate"><span class="pre">funcsql</span></code> code in the <a class="reference internal" href="funcsql.html#funcsql"><span class="std std-ref">funcsql Code</span></a> section.</p>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">Functional SQL</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="concept.html">Concept</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="funcsql.html">funcsql Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="demo.html">Demonstration Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notes.html">Aggregates and Group By</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notes.html#notes">Notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notes.html#sql-weirdness">SQL weirdness</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notes.html#subqueries">Subqueries</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notes.html#other-joins">Other Joins</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notes.html#other-sql">Other SQL</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="concept.html" title="previous chapter">Concept</a></li>
+      <li>Next: <a href="funcsql.html" title="next chapter">funcsql Code</a></li>
+  </ul></li>
+</ul>
+</div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2024, S.Lott.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.3.7</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+      |
+      <a href="_sources/components.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
