@@ -1,0 +1,9 @@
+pip-tools
+jsonschema
+sphinx
+sphinxcontrib-plantuml
+tox
+pytest
+pytest-cov
+ruff
+pyright
