@@ -255,6 +255,17 @@ The alias will be used in QueryComposite objects.</p>
 <p>In principle, this <strong>could</strong> lead to an optimization where pair-wise table joins are done
 to build the final <code class="docutils literal notranslate"><span class="pre">QueryComposite</span></code> objects.</p>
 <p>This doesn’t handle any of the outer join operators.</p>
+<div class="admonition-todo admonition" id="id1">
+<p class="admonition-title">Todo</p>
+<p>[LEFT | RIGHT | FULL] OUTER? JOIN</p>
+<p>An implicit union of non-matching rows.
+An additional “filterfalse()`` is required to provide NULL-filled missing rows.</p>
+</div>
+<div class="admonition-todo admonition" id="id2">
+<p class="admonition-title">Todo</p>
+<p><code class="docutils literal notranslate"><span class="pre">USING(&quot;col1&quot;,</span> <span class="pre">&quot;col2&quot;)</span></code> builds <code class="docutils literal notranslate"><span class="pre">labmda</span> <span class="pre">qc:</span> <span class="pre">qc.table.col1</span> <span class="pre">==</span> <span class="pre">qc.?.col1</span></code></p>
+<p>Based on left and right sides of <code class="docutils literal notranslate"><span class="pre">join(table,</span> <span class="pre">using=(&quot;col1&quot;,</span> <span class="pre">&quot;col2&quot;))</span></code>.</p>
+</div>
 </dd></dl>
 
 <dl class="py method">
@@ -394,6 +405,10 @@ This value is then referred to by name in the <code class="docutils literal notr
 </tr>
 </tbody>
 </table>
+<div class="admonition-todo admonition" id="id3">
+<p class="admonition-title">Todo</p>
+<p>Offer <code class="docutils literal notranslate"><span class="pre">DISTINCT</span></code> variants to reduce to a set before computation.</p>
+</div>
 </dd></dl>
 
 </section>
@@ -531,6 +546,10 @@ Implements cases where subquery produces a set of values.</p>
 <dd class="field-even"><p>An iterator overn <a class="reference internal" href="#funcsql.QueryComposite" title="funcsql.QueryComposite"><code class="xref py py-class docutils literal notranslate"><span class="pre">funcsql.QueryComposite</span></code></a> objects.</p>
 </dd>
 </dl>
+<div class="admonition-todo admonition" id="id4">
+<p class="admonition-title">Todo</p>
+<p>Outer Joins are implemented here.</p>
+</div>
 </dd></dl>
 
 <dl class="py function">

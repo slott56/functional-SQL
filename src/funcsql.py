@@ -225,7 +225,7 @@ class Aggregate:
         SUM,:py:func:`sum()`
         STDEV,:py:func:`statistics.stdev`
 
-    ..  TODO:: Offer ``DISTINCT`` variants to reduce to a set before computation.
+    ..  todo:: Offer ``DISTINCT`` variants to reduce to a set before computation.
     """
 
     def __init__(
@@ -417,12 +417,12 @@ class Select:
 
         This doesn't handle any of the outer join operators.
 
-        ..  TODO:: [LEFT | RIGHT | FULL] OUTER? JOIN
+        ..  todo:: [LEFT | RIGHT | FULL] OUTER? JOIN
 
             An implicit union of non-matching rows.
             An additional "filterfalse()`` is required to provide NULL-filled missing rows.
 
-        ..  TODO:: ``USING("col1", "col2")`` builds ``labmda qc: qc.table.col1 == qc.?.col1``
+        ..  todo:: ``USING("col1", "col2")`` builds ``labmda qc: qc.table.col1 == qc.?.col1``
 
             Based on left and right sides of ``join(table, using=("col1", "col2"))``.
         """
@@ -821,7 +821,9 @@ class Insert:
         return self
 
     def __call__(self) -> None:
-        # TODO: Schema check to be sure self.data appears to be compatible with self.table.column_names()
+        """
+        .. todo:: Schema check to be sure self.data appears to be compatible with self.table.column_names()
+        """
         self.table.rows.extend(self.data)
 
 
@@ -849,7 +851,9 @@ class Update:
         return self
 
     def __call__(self) -> None:
-        # TODO: Schema check to be sure self.set_expr.keys() appears to be compatible with self.table.column_names()
+        """
+        .. todo:: Schema check to be sure self.set_expr.keys() appears to be compatible with self.table.column_names()
+        """
         for raw_row in self.table.rows:
             exposed_row = Row(self.table.name, **raw_row)
             if self.where_clause(exposed_row):

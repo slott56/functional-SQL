@@ -33,6 +33,119 @@
             
   <section id="notes">
 <h1>Notes<a class="headerlink" href="#notes" title="Link to this heading">¶</a></h1>
+<section id="some-features">
+<h2>Some Features<a class="headerlink" href="#some-features" title="Link to this heading">¶</a></h2>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">WITH</span></code> clause and Recursion</p></li>
+<li><p>The Values clause</p></li>
+<li><p>Partitioned Tables</p></li>
+</ol>
+<section id="with-clause-and-recursion">
+<h3><code class="docutils literal notranslate"><span class="pre">WITH</span></code> clause and Recursion<a class="headerlink" href="#with-clause-and-recursion" title="Link to this heading">¶</a></h3>
+<p>This is interesting, and requires a recursive fetch function.
+An initial <code class="docutils literal notranslate"><span class="pre">SELECT</span></code> or <code class="docutils literal notranslate"><span class="pre">VALUES</span></code> seeds a FIFO queue.
+While the queue is not empty, the first item is yielded as a result and also becomes the context for a bound subquery that appends to the queue.</p>
+<p>There are a number of changes. First, there are two new query builders to support this:</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">Values</span></code> subclass of the Query Builder to create a degenerate query-like structure to emit literal values.
+The point is merely to pass the values through to the <a class="reference internal" href="funcsql.html#funcsql.fetch" title="funcsql.fetch"><code class="xref py py-func docutils literal notranslate"><span class="pre">funcsql.fetch()</span></code></a> function.
+The values are expressions. Which means there can be a subquery involved.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">With</span></code> subclass of Query Builder.</p>
+<ul>
+<li><p>Variant 1 is <code class="docutils literal notranslate"><span class="pre">With(table_name,</span> <span class="pre">as=Select(...),</span> <span class="pre">union=Select(...)).query(Select(...))</span></code>. These are recursive. (Note <code class="docutils literal notranslate"><span class="pre">union</span></code> vs. <code class="docutils literal notranslate"><span class="pre">union_all</span></code>.)
+This can also be <code class="docutils literal notranslate"><span class="pre">With(table_name,</span> <span class="pre">as=Values(...),</span> <span class="pre">union=Select(...)).query(Select(...))</span></code></p></li>
+<li><p>Variant 2 is <code class="docutils literal notranslate"><span class="pre">With(table_name,</span> <span class="pre">as=Select(...)).query(Select(...))</span></code>.
+These can be “chained”: <code class="docutils literal notranslate"><span class="pre">With(table_name,</span> <span class="pre">as=Select(...)).with(table_name,</span> <span class="pre">as=Select(...)).query(Select(...))</span></code>.
+Note the <code class="docutils literal notranslate"><span class="pre">with()</span></code> method with the same parameters as <code class="docutils literal notranslate"><span class="pre">With.__init__()</span></code>.</p>
+<p>These are essentially <code class="docutils literal notranslate"><span class="pre">table_name</span> <span class="pre">=</span> <span class="pre">fetch(Select)</span></code>.
+What’s interesting is the scope question: the tables only last for the duration of the <code class="docutils literal notranslate"><span class="pre">fetch()</span></code> executing
+the <code class="docutils literal notranslate"><span class="pre">With</span></code>.</p>
+</li>
+</ul>
+</li>
+</ul>
+<p>This leads to several distinct variants of <a class="reference internal" href="funcsql.html#funcsql.fetch" title="funcsql.fetch"><code class="xref py py-func docutils literal notranslate"><span class="pre">funcsql.fetch()</span></code></a>:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">fetch(Select()...)</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">fetch(Values())</span></code>. A special case used by the recursive <code class="docutils literal notranslate"><span class="pre">With</span></code> to simply produce values.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">fetch(With(table_name,</span> <span class="pre">as=Select(...),</span> <span class="pre">union=Select(...).query(Select(...))</span></code> with recursion. The <code class="docutils literal notranslate"><span class="pre">from_</span></code> or <code class="docutils literal notranslate"><span class="pre">join</span></code> in the <code class="docutils literal notranslate"><span class="pre">Select</span></code> must reference the CTE in the <code class="docutils literal notranslate"><span class="pre">With</span></code>.
+See <a class="reference external" href="https://www.sqlite.org/lang_with.html">https://www.sqlite.org/lang_with.html</a> for notes on the breadth-first traversal of the recursive results.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">fetch(With(table_name,</span> <span class="pre">as=Select(...).query(Select(...))</span></code>.  The non-recursive version (without the <code class="docutils literal notranslate"><span class="pre">union=</span></code>).
+In principle, this is a degenerate case where – absent the <code class="docutils literal notranslate"><span class="pre">union</span></code> clause – nothing is put into the queue and it’s “one-and-done.”</p></li>
+</ul>
+<p>This seems to be a straight-forward overloaded function with three parameter types.
+While Python doesn’t have Julia-style overloading, a wrapper <code class="docutils literal notranslate"><span class="pre">fetch()</span></code> can single-dispatch to the implementation <code class="docutils literal notranslate"><span class="pre">fetch()</span></code> functions.
+See <a class="reference external" href="https://docs.python.org/3/library/functools.html#functools.singledispatch">https://docs.python.org/3/library/functools.html#functools.singledispatch</a>.</p>
+<p>While it seems like a <code class="docutils literal notranslate"><span class="pre">QueryBuilder</span></code> superclass might be helpful to unify the <code class="docutils literal notranslate"><span class="pre">Select</span></code>, <code class="docutils literal notranslate"><span class="pre">Values</span></code>, and <code class="docutils literal notranslate"><span class="pre">With</span></code> subclasses, they have little in common.
+At most, they’re all support <code class="docutils literal notranslate"><span class="pre">__iter__()</span></code> as  <code class="docutils literal notranslate"><span class="pre">Iterator[Row]</span></code>.
+The alternative is <code class="docutils literal notranslate"><span class="pre">type</span> <span class="pre">QueryBuilder</span> <span class="pre">=</span> <span class="pre">Union[Select,</span> <span class="pre">Values,</span> <span class="pre">With]</span></code>.</p>
+</section>
+<section id="values-clause">
+<h3>Values clause<a class="headerlink" href="#values-clause" title="Link to this heading">¶</a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">Values()</span></code> builder can <strong>also</strong> be used by the <code class="docutils literal notranslate"><span class="pre">INSERT</span></code> implementation.
+It would unify <code class="docutils literal notranslate"><span class="pre">INSERT</span> <span class="pre">INTO</span> <span class="pre">table</span> <span class="pre">SELECT...</span></code> and <code class="docutils literal notranslate"><span class="pre">INSERT</span> <span class="pre">INTO</span> <span class="pre">table</span> <span class="pre">VALUES</span></code>.
+It would be ugly, though.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Insert</span><span class="p">()</span><span class="o">.</span><span class="n">into</span><span class="p">(</span><span class="n">table</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="p">([{</span><span class="n">data</span><span class="p">}])</span>
+</pre></div>
+</div>
+<p>vs.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Insert</span><span class="p">()</span><span class="o">.</span><span class="n">into</span><span class="p">(</span><span class="n">table</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="p">(</span><span class="n">Values</span><span class="p">({</span><span class="n">data</span><span class="p">}))</span>
+</pre></div>
+</div>
+<p>vs.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Insert</span><span class="p">()</span><span class="o">.</span><span class="n">into</span><span class="p">(</span><span class="n">table</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="p">(</span><span class="n">Select</span><span class="p">(</span><span class="o">...</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>The point is to minimize the reliance on SQL tables.
+These become elaborate wrappers around lists or partitioned sequences of lists.</p>
+</section>
+<section id="partitioned-tables">
+<h3>Partitioned Tables<a class="headerlink" href="#partitioned-tables" title="Link to this heading">¶</a></h3>
+<p>These should be an extention to <a class="reference internal" href="funcsql.html#funcsql.Table" title="funcsql.Table"><code class="xref py py-class docutils literal notranslate"><span class="pre">funcsql.Table</span></code></a> and nothing more.
+The use of <code class="xref py py-func docutils literal notranslate"><span class="pre">list()</span></code> in <a class="reference internal" href="funcsql.html#funcsql.group_reduce" title="funcsql.group_reduce"><code class="xref py py-func docutils literal notranslate"><span class="pre">funcsql.group_reduce()</span></code></a> is a potential problem.</p>
+<ol class="arabic simple">
+<li><p>Fix <a class="reference internal" href="funcsql.html#funcsql.Table" title="funcsql.Table"><code class="xref py py-class docutils literal notranslate"><span class="pre">funcsql.Table</span></code></a> to replace <code class="xref py py-func docutils literal notranslate"><span class="pre">list()</span></code>.</p></li>
+<li><p>Fix <a class="reference internal" href="funcsql.html#funcsql.group_reduce" title="funcsql.group_reduce"><code class="xref py py-func docutils literal notranslate"><span class="pre">funcsql.group_reduce()</span></code></a> to use <a class="reference internal" href="funcsql.html#funcsql.Table" title="funcsql.Table"><code class="xref py py-class docutils literal notranslate"><span class="pre">funcsql.Table</span></code></a> instead of <code class="xref py py-func docutils literal notranslate"><span class="pre">list()</span></code>.</p></li>
+<li><p>Subclass <a class="reference internal" href="funcsql.html#funcsql.Table" title="funcsql.Table"><code class="xref py py-class docutils literal notranslate"><span class="pre">funcsql.Table</span></code></a> to show how partitioning would work.</p></li>
+</ol>
+</section>
+</section>
+<section id="to-do-list">
+<h2>To Do List<a class="headerlink" href="#to-do-list" title="Link to this heading">¶</a></h2>
+<div class="admonition-todo admonition">
+<p class="admonition-title">Todo</p>
+<p>Recursive fetch() with initial query and recursive query.</p>
+</div>
+<p class="todo-source">(The <a class="reference internal" href="concept.html#id1"><em>original entry</em></a> is located in /Users/slott/github/local/functional-SQL/docs/concept.rst, line 273.)</p>
+<div class="admonition-todo admonition">
+<p class="admonition-title">Todo</p>
+<p>Values option as a degenerate query-like structure to emit literal values.</p>
+</div>
+<p class="todo-source">(The <a class="reference internal" href="concept.html#id2"><em>original entry</em></a> is located in /Users/slott/github/local/functional-SQL/docs/concept.rst, line 275.)</p>
+<div class="admonition-todo admonition">
+<p class="admonition-title">Todo</p>
+<p>[LEFT | RIGHT | FULL] OUTER? JOIN</p>
+<p>An implicit union of non-matching rows.
+An additional “filterfalse()`` is required to provide NULL-filled missing rows.</p>
+</div>
+<p class="todo-source">(The <a class="reference internal" href="funcsql.html#id1"><em>original entry</em></a> is located in /Users/slott/github/local/functional-SQL/docs/../src/funcsql.py:docstring of funcsql.Select.join, line 25.)</p>
+<div class="admonition-todo admonition">
+<p class="admonition-title">Todo</p>
+<p><code class="docutils literal notranslate"><span class="pre">USING(&quot;col1&quot;,</span> <span class="pre">&quot;col2&quot;)</span></code> builds <code class="docutils literal notranslate"><span class="pre">labmda</span> <span class="pre">qc:</span> <span class="pre">qc.table.col1</span> <span class="pre">==</span> <span class="pre">qc.?.col1</span></code></p>
+<p>Based on left and right sides of <code class="docutils literal notranslate"><span class="pre">join(table,</span> <span class="pre">using=(&quot;col1&quot;,</span> <span class="pre">&quot;col2&quot;))</span></code>.</p>
+</div>
+<p class="todo-source">(The <a class="reference internal" href="funcsql.html#id2"><em>original entry</em></a> is located in /Users/slott/github/local/functional-SQL/docs/../src/funcsql.py:docstring of funcsql.Select.join, line 30.)</p>
+<div class="admonition-todo admonition">
+<p class="admonition-title">Todo</p>
+<p>Offer <code class="docutils literal notranslate"><span class="pre">DISTINCT</span></code> variants to reduce to a set before computation.</p>
+</div>
+<p class="todo-source">(The <a class="reference internal" href="funcsql.html#id3"><em>original entry</em></a> is located in /Users/slott/github/local/functional-SQL/docs/../src/funcsql.py:docstring of funcsql.Aggregate, line 36.)</p>
+<div class="admonition-todo admonition">
+<p class="admonition-title">Todo</p>
+<p>Outer Joins are implemented here.</p>
+</div>
+<p class="todo-source">(The <a class="reference internal" href="funcsql.html#id4"><em>original entry</em></a> is located in /Users/slott/github/local/functional-SQL/docs/../src/funcsql.py:docstring of funcsql.where_filter, line 7.)</p>
+</section>
 </section>
 
 
@@ -58,7 +171,11 @@
 <li class="toctree-l1"><a class="reference internal" href="components.html">Components</a></li>
 <li class="toctree-l1"><a class="reference internal" href="funcsql.html">funcsql Code</a></li>
 <li class="toctree-l1"><a class="reference internal" href="demo.html">Demonstration Code</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Notes</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Notes</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#some-features">Some Features</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#to-do-list">To Do List</a></li>
+</ul>
+</li>
 </ul>
 
 <div class="relations">
