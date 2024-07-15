@@ -125,9 +125,9 @@ def test_subquery_select(employees, departments):
         first_name=lambda c: c.employees.first_name,
         department_name=lambda c: fetch_first_value(
             (
-                Select(department_name=lambda sqc: sqc.departments.department_name)
+                Select(department_name=lambda sqcr: sqcr.departments.department_name)
                 .from_(departments)
-                .where(lambda sqc: sqc.departments.department_id == c.employees.department_id)
+                .where(lambda sqcr: sqcr.departments.department_id == c.employees.department_id)
             ),
         ),
     ).from_(employees)

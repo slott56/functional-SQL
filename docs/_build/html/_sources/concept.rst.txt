@@ -30,18 +30,18 @@ Some Python that does the same thing.
 
 ..  code-block:: python
 
-    Select(name=lambda jr: jr.n.name, value=lambda jr: jr.v.c2)
+    Select(name=lambda cr: cr.n.name, value=lambda cr: cr.v.c2)
     .from_(n=names_table, v=values_table)
-    .where(lambda jr: jr.n.code == jr.v.c1)
+    .where(lambda cr: cr.n.code == cr.v.c1)
 
-Yes. The Python is longer. Yes it has ``lambda jr: jr.`` scattered around.
+Yes. The Python is longer. Yes it has ``lambda cr: cr.`` scattered around.
 The Python produces the same results as the SQL query, using essentially the same algorithm.
 
 However, It operates directly on native Python data structures.
 This means that **all** Python functions and object classes are available.
 There's no looking for a SQL equivalent, or -- worse -- a hybrid semi-SQL/semi-Python monstrosity.
 
-The ``lambda`` objects are necessary for building expressions that work on the "join-result" (or "query composite") objects fetched from tables.
+The ``lambda`` objects are necessary for building expressions that work on the "composite-row" objects fetched from tables.
 We don't want the Python run-time to immediately compute an answer to ``n.code == v.c1``.
 We want to provide a version of this expression to be evaluated for each row of the underlying tables.
 
@@ -77,6 +77,8 @@ There are five higher order functions, :math:`H_f(T)`, :math:`G_{r;m}(T)`, :math
 All but :math:`F(T)` are parameterized by other functions.
 These are applied to the individual rows of the resulting objects.
 
+This requires rethinking the order of the clauses.
+The order ``FROM t WHERE C_w SELECT e_1, e_2, a_1, a_2, ... GROUP BY k HAVING C_h`` reflects the order in which processing occurs.
 The algorithm has the following stages:
 
 -   From tables, :math:`T^{*} = F(T)`.
@@ -134,13 +136,12 @@ The algorithm has the following stages:
 Yes, the order these functions are applied is not the order ``SELECT`` statements are commonly written.
 
 
-We can think of this as a composite function that's slightly closer to ``SELECT`` syntax.
+We can think of this as a composite function that's closer to ``SELECT`` syntax.
 
 ..  math::
 
-    Q(T) = (F \circ W_{C_w(x)} \circ S_{E_m(x), \dots} \circ G_{K(x); A_p(x), \dots} \circ H_{C_h(x)})(T)
+    Q(T) = (S_{E_m(x), \dots} \circ F \circ W_{C_w(x)} \circ G_{K(x); A_p(x), \dots} \circ H_{C_h(x)})(T)
 
-This can be read ``FROM t WHERE C_w SELECT e_1, e_2, a_1, a_2, ... GROUP BY k HAVING C_h``.
 It's similar to the commonly-seen order of clauses.
 
 What's important are these features:
@@ -157,24 +158,25 @@ Here's the way higher-order functions apply to SQL clauses:
     :header: Clause, Function
 
     ``FROM``,itertools.product()
-    ``WHERE``,filter()
+    ``WHERE``,filter() using :math:`C_w(x)`.
     ``SELECT``,map() applied for each :math:`E_m(x)`.
     ``GROUP BY``,reduce() and map() applied for each :math:`A_p(x)`.
-    ``HAVING``,filter()
+    ``HAVING``,filter() using :math:`C_h(x)`.
 
 The Group By Alternatives
 =========================
 
 There are four cases for ``GROUP BY`` and aggregate functins in the ``SELECT`` clause:
 
--   No ``GROUP BY``, no aggregates in ``SELECT``. The results of :math:`S(W(F(T)))` are complete.
+-   No ``GROUP BY``, no aggregates in ``SELECT``. The results of :math:`(S \circ W \circ F)(T)` are complete.
 
 -   No ``GROUP BY``, one or more aggregates in ``SELECT``. The result is a single summary row.
-    It's :math:`G(S(W(F(T))))`, but the group-by operation is a kind of degenrate case working on a single group.
+    It's :math:`(G \circ S \circ W \circ F)(T)`, but the group-by operation is a kind of degenrate case;
+    it creates a single group.
     There can be no ``HAVING`` without a ``GROUP BY``.
 
 -   A ``GROUP BY`` clause, and aggregates in ``SELECT``.
-    The result is a new table of summary rows, :math:`G(S(W(F(T))))` which can then be processed by the ``HAVING`` clause.
+    The result is a new table of summary rows, :math:`(G \circ S \circ W \circ F)(T)` which can then be processed by the ``HAVING`` clause.
 
 -   A ``GROUP BY`` clause, but no aggregates in ``SELECT``. Not sure what this means.
     SQLite appears to ignore the ``GROUP BY`` and produce all rows.
@@ -224,7 +226,7 @@ There are two subquery contexts:
 
 -   Bound. In this case, the subquery has one or more expressions that reference tables from the parent query.
     This means the :math:`Q(T)` function requires a second argument value: :math:`Q(T; R)`, where :math:`R` is the current row in the query that contains the subquery.
-    This means any of the functions :math:`E_m(x)`, :math:`C_w(x)`, or :math:`C_h(x)` may include the results of a subquery.
+    This also means any of the functions :math:`E_m(x)`, :math:`C_w(x)`, or :math:`C_h(x)` may include the results of a subquery.
     For example, :math:`E_m(x) = V_{1,1}(Q_b(T; x))`, describes a scalar result of a bound subquery, :math:`Q_b`, found in the ``SELECT`` clause expression, :math:`E_m(x)`.
     One commonly-used function for the ``WHERE`` and ``HAVING`` clauses is the exists test, :math:`\exists(Q(T; R)`).
     It may also be a function to a value by executing the subquery, :math:`V_{1,1}(Q(T; R))`.
@@ -234,10 +236,38 @@ This, too, is a handy assumption that simplifies SQL slightly.
 
 What's essential here is the subquery processing has very handy implicit behavior.
 
+
+Common Table Expressions
+========================
+
+A **Common Table Expression** (**CTE**) has a creation query, :math:`Q_w`, prior to a target query.
+These are specified in a ``WITH`` clause, prior to the target select.
+The creation query prepares a table-like structure that can be incorporated into another query.
+
+..  math::
+
+    Q(T, T_w = Q_w(T))
+
+There can be more than one of these creation queries to create tables for use in the target query.
+
+Additionally, the creation query can involve recursion.
+
+..  math::
+
+    Q_w(T) = \begin{cases}
+        T_w &= Q_{w0}(T)  \text{ initially},\\
+        T_w &= Q_{wu}(T, T_w)  \text{ if $T_w \neq \emptyset$},\\
+    \end{cases}
+
+Often, the initialization, :math:`Q_{w0}`, is a ``VALUES`` clause.
+The recursion, :math:`Q_{wu}`, is specified as a ``UNION`` or ``UNION ALL`` clause that's syntactically part of the initial ``VALUES`` clause.
+The choice between breadth-first and depth-first traversal of the query results is specified with an ``ORDER BY`` clause.
+The default is breadth-first.
+
 Other Query Features
 ====================
 
-These "other" features include
+Some "other" features of SQL queries include the following:
 
 -   Order BY. This is best handled by Python's native :py:func:`sorted` function.
     ``sorted(fetch(Q), key=lambda row: ...)``.
@@ -249,27 +279,5 @@ These "other" features include
     The complication here is that the underlying :py:class:`sqlful.Row` objects are mutable dictionaries.
     To do set operations, it's best to make immtutable, frozen dataclasses.
 
--   Ordinary Common Table Expressions (The ``WITH`` clause).
-    These are separate queries performed before the main query.
-
-    ..  code-block:: SQL
-
-        WITH x(y) AS (
-            ...)
-        SELECT... FROM x...
-
-    becomes
-
-    ..  code-block:: Python
-
-        x = list(fetch(Select(y=...)))
-        fetch(Select().from_(x)...
-
--   The ``WITH RECURSIVE`` query.
-    This is interesting, and requires a recursive fetch function.
-    An initial ``SELECT`` or ``VALUES`` seeds a FIFO queue.
-    While the queue is not empty, the first item is yielded as a result and also becomes the context for a bound subquery that appends to the queue.
-
-..  todo:: Recursive fetch() with initial query and recursive query.
-
-..  todo:: Values option as a degenerate query-like structure to emit literal values.
+These can all be done with relative ease.
+There isn't any SQL-like syntax for these features.

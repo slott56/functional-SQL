@@ -13,9 +13,10 @@ An approach to writing functional Python that parallels SQL Select processing.
    :caption: Contents:
 
    concept
+   tutorial
+   demo
    components
    funcsql
-   demo
    notes
 
 

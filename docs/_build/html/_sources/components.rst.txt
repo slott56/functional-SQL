@@ -26,7 +26,7 @@ Your applications will look like this.
 
     @enduml
 
-That's about it.  We'll look at app code in the :ref:`demo` section.
+That's about it.  We look at app code in the :ref:`demo` and :ref:`tutorial` sections.
 
 We'll look at the :py:mod:`funcsql` code in the :ref:`funcsql` section.
 

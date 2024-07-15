@@ -40,24 +40,24 @@ def restructure(sample_rows: list[dict[str, str]]) -> list[Row]:
     samples = Table("samples", sample_rows)
 
     q1 = Select(
-        series=lambda qc: 1,
-        x=lambda qc: float(qc.samples.x123),
-        y=lambda qc: float(qc.samples.y1),
+        series=lambda cr: 1,
+        x=lambda cr: float(cr.samples.x123),
+        y=lambda cr: float(cr.samples.y1),
     ).from_(samples)
     q2 = Select(
-        series=lambda qc: 2,
-        x=lambda qc: float(qc.samples.x123),
-        y=lambda qc: float(qc.samples.y2),
+        series=lambda cr: 2,
+        x=lambda cr: float(cr.samples.x123),
+        y=lambda cr: float(cr.samples.y2),
     ).from_(samples)
     q3 = Select(
-        series=lambda qc: 3,
-        x=lambda qc: float(qc.samples.x123),
-        y=lambda qc: float(qc.samples.y3),
+        series=lambda cr: 3,
+        x=lambda cr: float(cr.samples.x123),
+        y=lambda cr: float(cr.samples.y3),
     ).from_(samples)
     q4 = Select(
-        series=lambda qc: 4,
-        x=lambda qc: float(qc.samples.x4),
-        y=lambda qc: float(qc.samples.y4),
+        series=lambda cr: 4,
+        x=lambda cr: float(cr.samples.x4),
+        y=lambda cr: float(cr.samples.y4),
     ).from_(samples)
 
     rows = (
@@ -74,9 +74,9 @@ def main() -> None:
 
     print("Series I")
     query = (
-        Select(x=lambda qc: qc.anscombe.x, y=lambda qc: qc.anscombe.y)
+        Select(x=lambda cr: cr.anscombe.x, y=lambda cr: cr.anscombe.y)
         .from_(anscombe)
-        .where(lambda qc: qc.anscombe.series == 1)
+        .where(lambda cr: cr.anscombe.series == 1)
     )
     for r in fetch(query):
         print(f"{r.x:6.2f}, {r.y:6.2f}")
@@ -84,11 +84,11 @@ def main() -> None:
     print("Means")
     stats_query = (
         Select(
-            mean_x=Aggregate(mean, lambda qc: qc.anscombe.x),
-            mean_y=Aggregate(mean, lambda qc: qc.anscombe.y)
+            mean_x=Aggregate(mean, lambda cr: cr.anscombe.x),
+            mean_y=Aggregate(mean, lambda cr: cr.anscombe.y)
         )
         .from_(anscombe)
-        .group_by(series=lambda qc: qc.anscombe.series)
+        .group_by(series=lambda cr: cr.anscombe.series)
     )
     for r in fetch(stats_query):
         print(f"{r.series} {r.mean_x:.2f} {r.mean_y:.2f}")

@@ -17,9 +17,9 @@ Here's the content of the :py:mod:`funcsql` module.
 
         Table *- Row : produces
 
-        class QueryComposite
+        class CompositeRow
 
-        QueryComposite *-- Row
+        CompositeRow *-- Row
 
         class Select {
             from_()
@@ -30,11 +30,9 @@ Here's the content of the :py:mod:`funcsql` module.
         }
 
         class Aggregate
-        class SelectStar
         class lambda << (F,orchid) >>
 
         Select o-- Aggregate
-        Select - SelectStar
         Select o-- lambda
 
         class fetch << (F,orchid) >>
@@ -42,7 +40,7 @@ Here's the content of the :py:mod:`funcsql` module.
         fetch --- Select : executes
         fetch o--> Row : > produces
         fetch o-- Table : < consumes
-        fetch o-- QueryComposite : uses
+        fetch o-- CompositeRow : uses
 
     }
 
@@ -51,7 +49,7 @@ Then the :py:class:`funcsql.Select` class, used to define a query.
 
 The :py:func:`funcsql.fetch` function embodies the **Essential SQL Algorithm**.
 It executes the query object, consuming rows from tables and producing rows in a result.
-Along the way, it builds :py:class:`funcsql.QueryComposite` objects which are provided to lambdas to evaluate expressions.
+Along the way, it builds :py:class:`funcsql.CompositeRow` objects which are provided to lambdas to evaluate expressions.
 
 Table and Row
 =============
@@ -88,12 +86,6 @@ Select
 ..  autoclass:: funcsql.Select
     :members:
 
-SelectStar
-----------
-
-..  autoclass:: funcsql.SelectStar
-
-There's one instance of this class, called ``STAR``.
 
 Aggregate
 ----------
@@ -104,12 +96,12 @@ To make this work out, they're wrapped as an object that's distinct from a simpl
 ..  autoclass:: funcsql.Aggregate
     :members:
 
-QueryComposite
+CompositeRow
 --------------
 
 These objects move through the :py:func:`funcsql.fetch` function's pipeline of steps.
 
-..  autoclass:: funcsql.QueryComposite
+..  autoclass:: funcsql.CompositeRow
     :members:
 
 SQL Algorithm
