@@ -73,8 +73,9 @@ A Query, :math:`Q(T)`, over :math:`n` tables, :math:`T = \{T_1, T_2, \dots, T_{n
 
     Q(T) = H_{C_h(x)} \biggl( G_{K(x); A_p(x), \dots} \Bigl( S_{E_m(x), \dots} \left( W_{C_w(x)} ( F(T) ) \right) \Bigr) \biggr)
 
-There are five higher order functions, :math:`H_f(T)`, :math:`G_{r;m}(T)`, :math:`S_m(T)`, :math:`W_f(T)`, :math:`F(T)`.
-All but :math:`F(T)` are parameterized by other functions.
+There are four higher-order functions, :math:`H_f(T)`, :math:`G_{r;m}(T)`, :math:`S_m(T)`, and :math:`W_f(T)`.
+There's one ordinary function :math:`F(T)`.
+The higher-order functions are parameterized by other functions.
 These are applied to the individual rows of the resulting objects.
 
 This requires rethinking the order of the clauses.
@@ -90,13 +91,16 @@ The algorithm has the following stages:
     This applies a condition, :math:`C_w(x)`, to each row in the joined tables, :math:`T^{*}`, to pass rows matching the conditions and meet any other criteria provided. :math:`T^{*^\prime} \subseteq T^{*}`.
     :math:`T^{*^\prime} = \{ r \in T^{*} \mid C_w(r) \}`. In effect, omitting a ``WHERE`` clause makes :math:`C_w(x) = \mathtt{True}`, leading to a cartesian product result.
 
-    A ``JOIN ON`` clause introduces additional logic to :math:`W_c(x)`. In principle, it might imply a sequence of pair-wise joins as the algorithm. While this might be a nice optimization, it doesn't materially alter the processing.
+    A ``JOIN ON`` clause introduces additional logic to :math:`C_w(x)`. In principle, it might imply a sequence of pair-wise joins as the algorithm. While this might be a nice optimization, it doesn't materially alter the processing.
     It is often easier to read than a massive ``WHERE`` clause.
 
 -   Select mapping, :math:`T^{\prime\prime} = S_{E_m(x), \dots}(T^{*^\prime})`.
 
     This transforms the filtered rows of :math:`T^{*^\prime}` to a new table-like structure by computing values or "projecting" values from the underlying tables. Each :math:`E_m(x)` function maps a composite row's values to a target value. The original table identities are lost at this point.
-    :math:`T^{\prime\prime} = \{ r \in T^{*^\prime} \mid \langle E_0(r), \dots, E_m(r) \rangle \}`
+    :math:`T^{\prime\prime} = \{ r \in T^{*^\prime} \mid \langle E_0(r), \dots, E_m(r) \rangle \}`.
+
+    Note that the :math:`E_m(x)` collection of expressions is a subset of the expressions in the SQL ``SELECT`` clause.
+    SQL ``SELECT`` syntax includes  aggregate expressions, :math:`A_p(x)`, even though they're properly part of ``GROUP BY`` processing.
 
 -   Group By reduction, :math:`T^{\Sigma} = G_{K(x); A_p(x), \dots}(T^{\prime\prime})`.
 
@@ -140,13 +144,13 @@ We can think of this as a composite function that's closer to ``SELECT`` syntax.
 
 ..  math::
 
-    Q(T) = (S_{E_m(x), \dots} \circ F \circ W_{C_w(x)} \circ G_{K(x); A_p(x), \dots} \circ H_{C_h(x)})(T)
+    Q(T) = (S_{E_m(x), \dots; A_p(x), \dots} \circ F \circ W_{C_w(x)} \circ G_{K(x), \dots} \circ H_{C_h(x)})(T)
 
-It's similar to the commonly-seen order of clauses.
+It's similar to the more commonly-used order of clauses.
 
 What's important are these features:
 
-1.  The sequence of operations is based on higher-order functions ``product()``, ``filter()``, ``map()`` ``reduce()``.
+1.  The sequence of operations is based on higher-order functions ``filter()``, ``map()`` ``reduce()``, and one ordinary ``product()`` function.
 
 2.  The sequence applies to "composite" rows from a number of tables prior to the ``SELECT`` and new rows from a single table after the ``SELECT``.
 
