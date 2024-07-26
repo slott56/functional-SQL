@@ -1,8 +1,13 @@
 [project]
-name = "Functional SQL"
+name = "functional-sql"
 description = "A collection of functions to provide SQL-like processing."
 readme = "README.rst"
 requires-python = ">=3.12"
+version = "0.1.0"
+
+[tools.setuptools]
+package_dir = {"" = "src"}
+packages = ["funcsql"]
 
 [build-system]
 requires = ["setuptools"]

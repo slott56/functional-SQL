@@ -14,7 +14,7 @@ babel==2.15.0
     # via sphinx
 build==1.2.1
     # via pip-tools
-cachetools==5.3.3
+cachetools==5.4.0
     # via tox
 certifi==2024.7.4
     # via requests
@@ -26,7 +26,7 @@ click==8.1.7
     # via pip-tools
 colorama==0.4.6
     # via tox
-coverage[toml]==7.5.4
+coverage[toml]==7.6.0
     # via pytest-cov
 distlib==0.3.8
     # via virtualenv
@@ -77,9 +77,9 @@ pyproject-hooks==1.1.0
     # via
     #   build
     #   pip-tools
-pyright==1.1.371
+pyright==1.1.373
     # via -r requirements-dev.in
-pytest==8.2.2
+pytest==8.3.2
     # via
     #   -r requirements-dev.in
     #   pytest-cov
@@ -91,15 +91,15 @@ referencing==0.35.1
     #   jsonschema-specifications
 requests==2.32.3
     # via sphinx
-rpds-py==0.19.0
+rpds-py==0.19.1
     # via
     #   jsonschema
     #   referencing
-ruff==0.5.1
+ruff==0.5.5
     # via -r requirements-dev.in
 snowballstemmer==2.2.0
     # via sphinx
-sphinx==7.3.7
+sphinx==7.4.7
     # via
     #   -r requirements-dev.in
     #   sphinxcontrib-plantuml
@@ -107,13 +107,13 @@ sphinxcontrib-applehelp==1.0.8
     # via sphinx
 sphinxcontrib-devhelp==1.0.6
     # via sphinx
-sphinxcontrib-htmlhelp==2.0.5
+sphinxcontrib-htmlhelp==2.0.6
     # via sphinx
 sphinxcontrib-jsmath==1.0.1
     # via sphinx
 sphinxcontrib-plantuml==0.30
     # via -r requirements-dev.in
-sphinxcontrib-qthelp==1.0.7
+sphinxcontrib-qthelp==1.0.8
     # via sphinx
 sphinxcontrib-serializinghtml==1.1.10
     # via sphinx
