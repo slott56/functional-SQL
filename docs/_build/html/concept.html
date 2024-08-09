@@ -81,68 +81,76 @@ The point is to stop using a database.</p>
 <section id="the-sql-algorithm">
 <h2>The SQL Algorithm<a class="headerlink" href="#the-sql-algorithm" title="Link to this heading">¶</a></h2>
 <p>We’ll work with a collection of tables, <span class="math notranslate nohighlight">\(T_1\)</span> through <span class="math notranslate nohighlight">\(T_{n}\)</span>.
-Each table, <span class="math notranslate nohighlight">\(T\)</span>, is a set of rows, <span class="math notranslate nohighlight">\(T_x = \{ R_1, R_2, \dots, R_{m} \}\)</span>.
-Each row, <span class="math notranslate nohighlight">\(R\)</span>, is a collection of atomic values, <span class="math notranslate nohighlight">\(R_y = \langle v_1, v_2, \dots \rangle\)</span>.</p>
+Each table, <span class="math notranslate nohighlight">\(T\)</span>, is a set of rows, <span class="math notranslate nohighlight">\(T_x = \{ r_1, r_2, \dots, r_{m} \}\)</span>.
+Each row, <span class="math notranslate nohighlight">\(r\)</span>, is a tuple of atomic values, <span class="math notranslate nohighlight">\(r = \langle v_1, v_2, \dots \rangle\)</span>.</p>
 <p>A Query, <span class="math notranslate nohighlight">\(Q(T)\)</span>, over <span class="math notranslate nohighlight">\(n\)</span> tables, <span class="math notranslate nohighlight">\(T = \{T_1, T_2, \dots, T_{n}\}\)</span>, is the following:</p>
 <div class="math notranslate nohighlight">
-\[Q(T) = H_{C_h(x)} \biggl( G_{K(x); A_p(x), \dots} \Bigl( S_{E_m(x), \dots} \left( W_{C_w(x)} ( F(T) ) \right) \Bigr) \biggr)\]</div>
-<p>There are four higher-order functions, <span class="math notranslate nohighlight">\(H_f(T)\)</span>, <span class="math notranslate nohighlight">\(G_{r;m}(T)\)</span>, <span class="math notranslate nohighlight">\(S_m(T)\)</span>, and <span class="math notranslate nohighlight">\(W_f(T)\)</span>.
+\[Q(T) = H_{C_h(r)} \biggl( G_{K(r); A_p(R_k), \dots} \Bigl( S_{E_m(r), \dots} \left( W_{C_w(x)} ( F(T) ) \right) \Bigr) \biggr)\]</div>
+<p>There are four higher-order functions, <span class="math notranslate nohighlight">\(H_f(R)\)</span>, <span class="math notranslate nohighlight">\(G_{r;m}(T)\)</span>, <span class="math notranslate nohighlight">\(S_m(T)\)</span>, and <span class="math notranslate nohighlight">\(W_f(T)\)</span>.
 There’s one ordinary function <span class="math notranslate nohighlight">\(F(T)\)</span>.
 The higher-order functions are parameterized by other functions.
-These are applied to the individual rows of the resulting objects.</p>
+These parameter functions are applied to the individual rows of table collections.</p>
 <p>This requires rethinking the order of the clauses.
 The order <code class="docutils literal notranslate"><span class="pre">FROM</span> <span class="pre">t</span> <span class="pre">WHERE</span> <span class="pre">C_w</span> <span class="pre">SELECT</span> <span class="pre">e_1,</span> <span class="pre">e_2,</span> <span class="pre">a_1,</span> <span class="pre">a_2,</span> <span class="pre">...</span> <span class="pre">GROUP</span> <span class="pre">BY</span> <span class="pre">k</span> <span class="pre">HAVING</span> <span class="pre">C_h</span></code> reflects the order in which processing occurs.
 The algorithm has the following stages:</p>
 <ul>
 <li><p>From tables, <span class="math notranslate nohighlight">\(T^{*} = F(T)\)</span>.</p>
-<p>This joins all the tables. It’s a kind of <span class="math notranslate nohighlight">\(\prod T\)</span>, sometimes stated as <span class="math notranslate nohighlight">\(T_0 \bowtie T_1 \bowtie \dots \bowtie T_n\)</span>.</p>
+<p>This joins all the tables. It’s a kind of <span class="math notranslate nohighlight">\(\prod T\)</span>, sometimes stated as <span class="math notranslate nohighlight">\(T_1 \bowtie T_2 \bowtie \dots \bowtie T_n\)</span>.</p>
 </li>
 <li><p>Where filter, <span class="math notranslate nohighlight">\(T^{*^\prime} = W_{C_w(x)}(T^{*})\)</span>.</p>
-<p>This applies a condition, <span class="math notranslate nohighlight">\(C_w(x)\)</span>, to each row in the joined tables, <span class="math notranslate nohighlight">\(T^{*}\)</span>, to pass rows matching the conditions and meet any other criteria provided. <span class="math notranslate nohighlight">\(T^{*^\prime} \subseteq T^{*}\)</span>.
+<p>This applies a condition, <span class="math notranslate nohighlight">\(C_w(x)\)</span>, to each row in the joined tables, <span class="math notranslate nohighlight">\(x \in T^{*}\)</span>, to pass rows matching the condition, creating a subset, <span class="math notranslate nohighlight">\(T^{*^\prime} \subseteq T^{*}\)</span>.
 <span class="math notranslate nohighlight">\(T^{*^\prime} = \{ r \in T^{*} \mid C_w(r) \}\)</span>. In effect, omitting a <code class="docutils literal notranslate"><span class="pre">WHERE</span></code> clause makes <span class="math notranslate nohighlight">\(C_w(x) = \mathtt{True}\)</span>, leading to a cartesian product result.</p>
 <p>A <code class="docutils literal notranslate"><span class="pre">JOIN</span> <span class="pre">ON</span></code> clause introduces additional logic to <span class="math notranslate nohighlight">\(C_w(x)\)</span>. In principle, it might imply a sequence of pair-wise joins as the algorithm. While this might be a nice optimization, it doesn’t materially alter the processing.
 It is often easier to read than a massive <code class="docutils literal notranslate"><span class="pre">WHERE</span></code> clause.</p>
 </li>
-<li><p>Select mapping, <span class="math notranslate nohighlight">\(T^{\prime\prime} = S_{E_m(x), \dots}(T^{*^\prime})\)</span>.</p>
-<p>This transforms the filtered rows of <span class="math notranslate nohighlight">\(T^{*^\prime}\)</span> to a new table-like structure by computing values or “projecting” values from the underlying tables. Each <span class="math notranslate nohighlight">\(E_m(x)\)</span> function maps a composite row’s values to a target value. The original table identities are lost at this point.
-<span class="math notranslate nohighlight">\(T^{\prime\prime} = \{ r \in T^{*^\prime} \mid \langle E_0(r), \dots, E_m(r) \rangle \}\)</span>.</p>
-<p>Note that the <span class="math notranslate nohighlight">\(E_m(x)\)</span> collection of expressions is a subset of the expressions in the SQL <code class="docutils literal notranslate"><span class="pre">SELECT</span></code> clause.
-SQL <code class="docutils literal notranslate"><span class="pre">SELECT</span></code> syntax includes  aggregate expressions, <span class="math notranslate nohighlight">\(A_p(x)\)</span>, even though they’re properly part of <code class="docutils literal notranslate"><span class="pre">GROUP</span> <span class="pre">BY</span></code> processing.</p>
+<li><p>Select mapping, <span class="math notranslate nohighlight">\(R = S_{E_m(r), \dots}(T^{*^\prime})\)</span>.</p>
+<p>This transforms the filtered rows of <span class="math notranslate nohighlight">\(T^{*^\prime}\)</span> to a new table structure, <span class="math notranslate nohighlight">\(R\)</span>, by computing values or “projecting” values from the source tables. Each <span class="math notranslate nohighlight">\(E_m(r)\)</span> function maps a composite row of values to a single target value. The original table identities are lost at this point.
+<span class="math notranslate nohighlight">\(R = \{ r \in T^{*^\prime} \mid \langle E_0(r), \dots, E_m(r) \rangle \}\)</span>.</p>
+<p>Note that the <span class="math notranslate nohighlight">\(E_m(r)\)</span> collection of expressions is a subset of the expressions in the SQL <code class="docutils literal notranslate"><span class="pre">SELECT</span></code> clause.
+SQL <code class="docutils literal notranslate"><span class="pre">SELECT</span></code> syntax includes  aggregate expressions, <span class="math notranslate nohighlight">\(A_p(g)\)</span>, even though they’re properly part of <code class="docutils literal notranslate"><span class="pre">GROUP</span> <span class="pre">BY</span></code> processing.</p>
+<p>Each expression, <span class="math notranslate nohighlight">\(E_m(r)\)</span>, is a lambda, <span class="math notranslate nohighlight">\(\lambda r.E_m(r)\)</span>.</p>
 </li>
-<li><p>Group By reduction, <span class="math notranslate nohighlight">\(T^{\Sigma} = G_{K(x); A_p(x), \dots}(T^{\prime\prime})\)</span>.</p>
+<li><p>Group By reduction to sub-tables distinguished by key, <span class="math notranslate nohighlight">\(K(x)\)</span>, <span class="math notranslate nohighlight">\(R_{K(x)} = G_{K(x); A_p(x), \dots}(R)\)</span>.</p>
 <p>There are two steps.</p>
 <ul>
-<li><p>First, reduce rows to groups.
-The <span class="math notranslate nohighlight">\(K(x)\)</span> function maps a row to a group identifier: <span class="math notranslate nohighlight">\(\{k \mapsto \{T_k^{\prime\prime}\}\} = G_{K(x)}(T^{\prime\prime})\)</span>.
-The mapping function, <span class="math notranslate nohighlight">\(K(x)\)</span>, has some domain of values, <span class="math notranslate nohighlight">\(\mathbb{K}\)</span>.
-This domain is the set of all values when <span class="math notranslate nohighlight">\(K(x)\)</span> is applied to actual rows in <span class="math notranslate nohighlight">\(T^{\prime\prime}\)</span>.
-Also, the domain can be a vector of values.</p>
-<p>Each value <span class="math notranslate nohighlight">\(k \in \mathbb{K}\)</span> is associated with a collection of individual rows.
-<span class="math notranslate nohighlight">\(\{k \mapsto \{T_k^{\prime\prime}\}\} = \{ k \in \mathbb{K} \mid k \mapsto \{ r \in T^{\prime\prime} \mid K(r) = k \} \}\)</span>.</p>
-<p>Absent any explicit group-by, all the data belongs to a single group, and <span class="math notranslate nohighlight">\(\mathbb{K} = \{\mathtt{True}\}\)</span>.</p>
+<li><p>First, decompose the original table, <span class="math notranslate nohighlight">\(R\)</span>, into sub-tables, <span class="math notranslate nohighlight">\(R_k\)</span>, with a common key value, <span class="math notranslate nohighlight">\(k\)</span>.
+The given <span class="math notranslate nohighlight">\(K(x)\)</span> function maps each row to a common key value.
+This function has some universe of values over the rows in R: <span class="math notranslate nohighlight">\(\mathbb{K} = \{K(r) \mid r \in R\}\)</span>.
+(To support complex keys, the value of <span class="math notranslate nohighlight">\(k\)</span> can be a tuple of atomic values.)</p>
+<p>Each value, <span class="math notranslate nohighlight">\(k \in \mathbb{K}\)</span>, is associated with a sub-table of rows.
+<span class="math notranslate nohighlight">\(k \mapsto \{R_k\}\)</span>, or, <span class="math notranslate nohighlight">\(R_k = \{ r \in R \mid K(r) = k \}\)</span>.</p>
+<p>Absent any explicit group-by clause, all the data belongs to a single group, and the universe of values is a single, anonymous value, <span class="math notranslate nohighlight">\(\mathbb{K} = \{\bot\}\)</span>.
+This means there’s only one sub-table which is equal to the original table, <span class="math notranslate nohighlight">\(R\)</span>.</p>
 </li>
-<li><p>Second, map groups to aggregate values. While the aggregate functions are specified in the SQL <code class="docutils literal notranslate"><span class="pre">SELECT</span></code> clause, they are applied to groups.
-The <span class="math notranslate nohighlight">\(A_0(x), \dots, A_p(x)\)</span> functions compute aggregated values for the rows in the group.</p>
-<p>Aggregate functions include sum, mean, cout, min, max, etc.
-There are also variants for handling <code class="docutils literal notranslate"><span class="pre">NULL</span></code> values.</p>
-<p>The result, <span class="math notranslate nohighlight">\(T^{\Sigma}\)</span> is a new table, with a row for each value in <span class="math notranslate nohighlight">\(\mathbb{K}\)</span>.
-<span class="math notranslate nohighlight">\(\{k \in \mathbb{K} \mid k + \langle A_0(T_k^{\prime\prime}), \dots, A_p(T_k^{\prime\prime}) \rangle \}\)</span>.</p>
-<p>If there are no aggregates, the result is <span class="math notranslate nohighlight">\(\mathbb{K}\)</span>, the set of values computed by the <span class="math notranslate nohighlight">\(K(x)\)</span> function.</p>
+<li><p>Second, map all the rows of each sub-table, <span class="math notranslate nohighlight">\(R_k\)</span>, to aggregate values, reducing each sub-table to a row in a new group-by table.
+While the aggregate functions are specified in the SQL <code class="docutils literal notranslate"><span class="pre">SELECT</span></code> clause, they are applied to the sub-table created by the group-by function.
+The <span class="math notranslate nohighlight">\(A_0(R_k), \dots, A_p(R_k)\)</span> functions compute the collection of aggregate values for all rows in a sub-table.</p>
+<p>Each expression, <span class="math notranslate nohighlight">\(A_p(R_k)\)</span>, is a lambda over a sub-table, <span class="math notranslate nohighlight">\(\lambda R_k.A_p(R_k)\)</span>.
+Consider summation, for example: <span class="math notranslate nohighlight">\(\lambda R_k.\sum\limits_{r \in R_k}r\)</span>.
+The SQL syntax summarizes a fair amount of detail.</p>
+<p>Aggregate functions include sum, mean, count, min, max, among others.
+There are two variants: the default behavior creates a list of values; the <code class="docutils literal notranslate"><span class="pre">DISTINCT</span></code> variant creates a set of only the distinct values.
+Additionally, the key values are also available as a <span class="math notranslate nohighlight">\(\lambda R_k.k\)</span> lambda.</p>
+<p>When there’s no group-by, there’s a single table that is summarized by the aggregate functions.</p>
+<p>This creates a new table, <span class="math notranslate nohighlight">\(R_k^\Sigma\)</span>. Each row is the result of aggregate computations over
+a sub-table, <span class="math notranslate nohighlight">\(R_k\)</span>, for all <span class="math notranslate nohighlight">\(k \in \mathbb{K}\)</span>.
+<span class="math notranslate nohighlight">\(R_k^\Sigma = \{k \in \mathbb{K} \mid k + \langle A_0(R_k), \dots, A_p(R_k) \rangle \}\)</span>.</p>
 </li>
-<li><p>Important. If there is no <code class="docutils literal notranslate"><span class="pre">GROUP</span> <span class="pre">BY</span></code> clause and no aggregates, the result is <span class="math notranslate nohighlight">\(T^{\Sigma} = T^{\prime\prime}\)</span>.
-Since there can be no <code class="docutils literal notranslate"><span class="pre">HAVING</span></code> clause without a <code class="docutils literal notranslate"><span class="pre">GROUP</span> <span class="pre">BY</span></code> clause, with no <code class="docutils literal notranslate"><span class="pre">GROUP</span> <span class="pre">BY</span></code>, processing is effectively finished.</p></li>
+<li><p>Important. If there is no <code class="docutils literal notranslate"><span class="pre">GROUP</span> <span class="pre">BY</span></code> clause and no aggregates, no transformation occurs: <span class="math notranslate nohighlight">\(R_k^\Sigma = R\)</span>.
+(Since there can be no <code class="docutils literal notranslate"><span class="pre">HAVING</span></code> clause without a <code class="docutils literal notranslate"><span class="pre">GROUP</span> <span class="pre">BY</span></code> clause, with no <code class="docutils literal notranslate"><span class="pre">GROUP</span> <span class="pre">BY</span></code>, processing is effectively finished when there’s no <code class="docutils literal notranslate"><span class="pre">GROUP</span> <span class="pre">BY</span></code>.)</p></li>
 </ul>
 </li>
-<li><p>Having filter, <span class="math notranslate nohighlight">\(T^{\Sigma^\prime} = H_{C_h(x)}(T^{\Sigma})\)</span>.</p>
-<p>This applies a condition, <span class="math notranslate nohighlight">\(C_h(x)\)</span>, to each row in the group-by result to pass matching rows. <span class="math notranslate nohighlight">\(T^{\Sigma^\prime} \subseteq T^{\Sigma}\)</span>. Absent a <code class="docutils literal notranslate"><span class="pre">HAVING</span></code> clause, <span class="math notranslate nohighlight">\(C_h(x) = \mathtt{True}\)</span>, and all rows are kept. As noted earlier, if there’s no <code class="docutils literal notranslate"><span class="pre">GROUP</span> <span class="pre">BY</span></code> clause, there can be no <code class="docutils literal notranslate"><span class="pre">HAVING</span></code> clause.</p>
-<p>This is essentially identical to the Where filter processing, <span class="math notranslate nohighlight">\(W_{C_w(x)}(T^{*})\)</span>.</p>
+<li><p>Having filter, <span class="math notranslate nohighlight">\(R_k^{\Sigma^\prime} = H_{C_h(r)}(R_k^\Sigma)\)</span>.</p>
+<p>This applies a condition, <span class="math notranslate nohighlight">\(C_h(r)\)</span>, to each row in the group-by result to pass matching rows, creating a subset, <span class="math notranslate nohighlight">\(R_k^{\Sigma^\prime} \subseteq R_k^\Sigma\)</span>. Absent a <code class="docutils literal notranslate"><span class="pre">HAVING</span></code> clause, <span class="math notranslate nohighlight">\(C_h(r) = \mathtt{True}\)</span>, and all rows are kept.</p>
+<p>This is essentially identical to the Where filter processing, <span class="math notranslate nohighlight">\(T^{*^\prime} = W_{C_w(r)}(T^{*})\)</span>.</p>
 </li>
 </ul>
 <p>Yes, the order these functions are applied is not the order <code class="docutils literal notranslate"><span class="pre">SELECT</span></code> statements are commonly written.</p>
-<p>We can think of this as a composite function that’s closer to <code class="docutils literal notranslate"><span class="pre">SELECT</span></code> syntax.</p>
+<p>We can think of this as a composite function.
+We can rearrange things so it is closer to <code class="docutils literal notranslate"><span class="pre">SELECT</span></code> syntax.</p>
 <div class="math notranslate nohighlight">
-\[Q(T) = (S_{E_m(x), \dots; A_p(x), \dots} \circ F \circ W_{C_w(x)} \circ G_{K(x), \dots} \circ H_{C_h(x)})(T)\]</div>
-<p>It’s similar to the more commonly-used order of clauses.</p>
+\[Q(T) = (S_{E_m(r), \dots; A_p(R_k), \dots} \circ F \circ W_{C_w(r)} \circ G_{K(r), \dots} \circ H_{C_h(r)})(T)\]</div>
+<p>The above expression is similar to the more commonly-used order of clauses.</p>
 <p>What’s important are these features:</p>
 <ol class="arabic simple">
 <li><p>The sequence of operations is based on higher-order functions <code class="docutils literal notranslate"><span class="pre">filter()</span></code>, <code class="docutils literal notranslate"><span class="pre">map()</span></code> <code class="docutils literal notranslate"><span class="pre">reduce()</span></code>, and one ordinary <code class="docutils literal notranslate"><span class="pre">product()</span></code> function.</p></li>
@@ -158,37 +166,42 @@ Since there can be no <code class="docutils literal notranslate"><span class="pr
 </thead>
 <tbody>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">FROM</span></code></p></td>
-<td><p>itertools.product()</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">itertools.product()</span></code> to create <span class="math notranslate nohighlight">\(\prod T\)</span>.</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">WHERE</span></code></p></td>
-<td><p>filter() using <span class="math notranslate nohighlight">\(C_w(x)\)</span>.</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">filter()</span></code> using <span class="math notranslate nohighlight">\(C_w(r)\)</span>.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">SELECT</span></code></p></td>
-<td><p>map() applied for each <span class="math notranslate nohighlight">\(E_m(x)\)</span>.</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">map()</span></code> applied for each <span class="math notranslate nohighlight">\(E_m(r)\)</span>.</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">GROUP</span> <span class="pre">BY</span></code></p></td>
-<td><p>reduce() and map() applied for each <span class="math notranslate nohighlight">\(A_p(x)\)</span>.</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">reduce()</span></code> to create <span class="math notranslate nohighlight">\(R_k\)</span> and compute the summary <span class="math notranslate nohighlight">\(A_p(R_k)\)</span>.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">HAVING</span></code></p></td>
-<td><p>filter() using <span class="math notranslate nohighlight">\(C_h(x)\)</span>.</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">filter()</span></code> using <span class="math notranslate nohighlight">\(C_h(r)\)</span>.</p></td>
 </tr>
 </tbody>
 </table>
+<p>Therefore:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">filter</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">reduce</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="nb">map</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="nb">filter</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">itertools</span><span class="o">.</span><span class="n">product</span><span class="p">(</span><span class="n">T</span><span class="p">)))))</span>
+</pre></div>
+</div>
+<p>Is a conceptual overview of the SQL operation.</p>
 </section>
 <section id="the-group-by-alternatives">
 <h2>The Group By Alternatives<a class="headerlink" href="#the-group-by-alternatives" title="Link to this heading">¶</a></h2>
-<p>There are four cases for <code class="docutils literal notranslate"><span class="pre">GROUP</span> <span class="pre">BY</span></code> and aggregate functins in the <code class="docutils literal notranslate"><span class="pre">SELECT</span></code> clause:</p>
+<p>There are four cases for <code class="docutils literal notranslate"><span class="pre">GROUP</span> <span class="pre">BY</span></code> and aggregate functions in the <code class="docutils literal notranslate"><span class="pre">SELECT</span></code> clause:</p>
 <ul class="simple">
-<li><p>No <code class="docutils literal notranslate"><span class="pre">GROUP</span> <span class="pre">BY</span></code>, no aggregates in <code class="docutils literal notranslate"><span class="pre">SELECT</span></code>. The results of <span class="math notranslate nohighlight">\((S \circ W \circ F)(T)\)</span> are complete.</p></li>
-<li><p>No <code class="docutils literal notranslate"><span class="pre">GROUP</span> <span class="pre">BY</span></code>, one or more aggregates in <code class="docutils literal notranslate"><span class="pre">SELECT</span></code>. The result is a single summary row.
-It’s <span class="math notranslate nohighlight">\((G \circ S \circ W \circ F)(T)\)</span>, but the group-by operation is a kind of degenrate case;
-it creates a single group.
+<li><p>Neither <code class="docutils literal notranslate"><span class="pre">GROUP</span> <span class="pre">BY</span></code>, nor aggregates in <code class="docutils literal notranslate"><span class="pre">SELECT</span></code>. The results of <span class="math notranslate nohighlight">\(R = (S \circ W \circ F)(T)\)</span> are complete.</p></li>
+<li><p>No <code class="docutils literal notranslate"><span class="pre">GROUP</span> <span class="pre">BY</span></code>, but one or more aggregates in <code class="docutils literal notranslate"><span class="pre">SELECT</span></code>. The result is a single summary row.
+It’s <span class="math notranslate nohighlight">\(R = (G \circ S \circ W \circ F)(T)\)</span>, but the group-by operation is a kind of degenerate case;
+it creates a single group and therefore a single result row from the aggregate computation.
 There can be no <code class="docutils literal notranslate"><span class="pre">HAVING</span></code> without a <code class="docutils literal notranslate"><span class="pre">GROUP</span> <span class="pre">BY</span></code>.</p></li>
 <li><p>A <code class="docutils literal notranslate"><span class="pre">GROUP</span> <span class="pre">BY</span></code> clause, and aggregates in <code class="docutils literal notranslate"><span class="pre">SELECT</span></code>.
-The result is a new table of summary rows, <span class="math notranslate nohighlight">\((G \circ S \circ W \circ F)(T)\)</span> which can then be processed by the <code class="docutils literal notranslate"><span class="pre">HAVING</span></code> clause.</p></li>
+The result is a new table of summary rows, <span class="math notranslate nohighlight">\(R = (G \circ S \circ W \circ F)(T)\)</span> which can then be processed by the <code class="docutils literal notranslate"><span class="pre">HAVING</span></code> clause.</p></li>
 <li><p>A <code class="docutils literal notranslate"><span class="pre">GROUP</span> <span class="pre">BY</span></code> clause, but no aggregates in <code class="docutils literal notranslate"><span class="pre">SELECT</span></code>. Not sure what this means.
-SQLite appears to ignore the <code class="docutils literal notranslate"><span class="pre">GROUP</span> <span class="pre">BY</span></code> and produce all rows.
-It seems also sensible to report the group keys and be done with it.</p></li>
+SQLite3 appears to ignore the <code class="docutils literal notranslate"><span class="pre">GROUP</span> <span class="pre">BY</span></code> key definition and produce all rows.
+This doesn’t seem completely sensible; it seems more sensible to emit the distinct combinations of key values.</p></li>
 </ul>
 <p>The <code class="docutils literal notranslate"><span class="pre">GROUP</span> <span class="pre">BY</span></code> expression needs to be computed for each query composite row.
 Consequently, a <code class="docutils literal notranslate"><span class="pre">.group_by(name=lambda...)</span></code> creates a new <code class="docutils literal notranslate"><span class="pre">name=lambda...</span></code> in the <code class="docutils literal notranslate"><span class="pre">Select</span></code> clause.</p>
@@ -210,12 +223,12 @@ Consequently, a <code class="docutils literal notranslate"><span class="pre">.gr
 This suggests a value selector function can pick values from a single column of the result, <span class="math notranslate nohighlight">\(V_c(Q(T))\)</span> will
 pick one column, <span class="math notranslate nohighlight">\(c\)</span> from all rows, <span class="math notranslate nohighlight">\(V_c(Q(T)) = \{r \in Q(T) \mid r_c\}\)</span>, to create a set of values.</p></li>
 <li><p>The subquery produces a single value for scalar operators.
-This suggests a wrapper function to pick one row from the result and then pick one value from the row.
-The resulting table has one or more rows, <span class="math notranslate nohighlight">\(T^{\Sigma^\prime} = \{R_1, R_2, \dots, R_n\}\)</span>.
-The first row has one or more values, <span class="math notranslate nohighlight">\(R_1 = \langle v_1, v_2, \dots, v_n \rangle\)</span>.
+This suggests a wrapper function to pick a row from the result and then pick one value from the chosen row.
+The resulting table has one or more rows, <span class="math notranslate nohighlight">\(T = \{r_1, r_2, \dots, r_n\}\)</span>.
+The first row has one or more values, <span class="math notranslate nohighlight">\(r_1 = \langle v_1, v_2, \dots, v_n \rangle\)</span>.
 The value selector function, <span class="math notranslate nohighlight">\(V_{n, c}(Q(T)) = {Q(T)_n}_c\)</span>, can pick row <span class="math notranslate nohighlight">\(n\)</span>, and column <span class="math notranslate nohighlight">\(c\)</span> of the table to retrieve the scalar value.</p></li>
 <li><p>In an <code class="docutils literal notranslate"><span class="pre">EXISTS()</span></code> context the subquery producing any result at all means <code class="docutils literal notranslate"><span class="pre">EXISTS()</span></code> is <code class="docutils literal notranslate"><span class="pre">True</span></code>.
-Failing to produce a result means  <code class="docutils literal notranslate"><span class="pre">EXISTS()</span></code> is <code class="docutils literal notranslate"><span class="pre">False</span></code>. A function, <span class="math notranslate nohighlight">\(\exists(Q(T))\)</span> is applied to see if there was a row.</p></li>
+Failing to produce a result means  <code class="docutils literal notranslate"><span class="pre">EXISTS()</span></code> is <code class="docutils literal notranslate"><span class="pre">False</span></code>. A function, <span class="math notranslate nohighlight">\(\exists(Q(T))\)</span> is applied to see if there was at least one row in the subquery result.</p></li>
 </ul>
 <p>These wrapper functions to get all values from a columns or a specific value from a row and a column are implicit in SQL.
 The <code class="docutils literal notranslate"><span class="pre">EXISTS()</span></code> function is the only one that’s explicit.
@@ -225,11 +238,12 @@ The implicit value-extraction is a handy assumption that simplifies SQL slightly
 <li><p>Independent. In this case, the subquery has no expressions that reference tables from the parent query.
 The subquery must be executed first, and the resulting value provided to the parent query.</p></li>
 <li><p>Bound. In this case, the subquery has one or more expressions that reference tables from the parent query.
-This means the <span class="math notranslate nohighlight">\(Q(T)\)</span> function requires a second argument value: <span class="math notranslate nohighlight">\(Q(T; R)\)</span>, where <span class="math notranslate nohighlight">\(R\)</span> is the current row in the query that contains the subquery.
-This also means any of the functions <span class="math notranslate nohighlight">\(E_m(x)\)</span>, <span class="math notranslate nohighlight">\(C_w(x)\)</span>, or <span class="math notranslate nohighlight">\(C_h(x)\)</span> may include the results of a subquery.
-For example, <span class="math notranslate nohighlight">\(E_m(x) = V_{1,1}(Q_b(T; x))\)</span>, describes a scalar result of a bound subquery, <span class="math notranslate nohighlight">\(Q_b\)</span>, found in the <code class="docutils literal notranslate"><span class="pre">SELECT</span></code> clause expression, <span class="math notranslate nohighlight">\(E_m(x)\)</span>.
-One commonly-used function for the <code class="docutils literal notranslate"><span class="pre">WHERE</span></code> and <code class="docutils literal notranslate"><span class="pre">HAVING</span></code> clauses is the exists test, <span class="math notranslate nohighlight">\(\exists(Q(T; R)\)</span>).
-It may also be a function to a value by executing the subquery, <span class="math notranslate nohighlight">\(V_{1,1}(Q(T; R))\)</span>.</p></li>
+This means the <span class="math notranslate nohighlight">\(Q(T)\)</span> function requires a second argument value: <span class="math notranslate nohighlight">\(Q(T; r)\)</span>, where <span class="math notranslate nohighlight">\(r\)</span> is the current row in the query that contains the subquery.
+This also means any of the functions <span class="math notranslate nohighlight">\(E_m(r)\)</span>, <span class="math notranslate nohighlight">\(C_w(r)\)</span>, or <span class="math notranslate nohighlight">\(C_h(r)\)</span> may include the results of a subquery.
+For example, <span class="math notranslate nohighlight">\(E_m(x) = V_{1,1}(Q_b(T; x))\)</span>, describes a scalar result of a bound subquery, <span class="math notranslate nohighlight">\(Q_b\)</span>.
+This is a <code class="docutils literal notranslate"><span class="pre">SELECT</span></code> clause expression, <span class="math notranslate nohighlight">\(E_m(x)\)</span> with a reference to a subquery.
+One commonly-used function for the <code class="docutils literal notranslate"><span class="pre">WHERE</span></code> and <code class="docutils literal notranslate"><span class="pre">HAVING</span></code> clauses is the <code class="docutils literal notranslate"><span class="pre">EXISTS</span></code> test, <span class="math notranslate nohighlight">\(\exists(Q(T; r)\)</span>).
+It may also be a function to a value by executing the subquery, <span class="math notranslate nohighlight">\(V_{1,1}(Q(T; r))\)</span>.</p></li>
 </ul>
 <p>The bound subquery is also implicit in SQL.
 This, too, is a handy assumption that simplifies SQL slightly.</p>
@@ -247,10 +261,11 @@ The creation query prepares a table-like structure that can be incorporated into
 <div class="math notranslate nohighlight">
 \[\begin{split}Q_w(T) = \begin{cases}
     T_w &amp;= Q_{w0}(T)  \text{ initially},\\
-    T_w &amp;= Q_{wu}(T, T_w)  \text{ if $T_w \neq \emptyset$},\\
+    T_w &amp;= Q_{w*}(T, T_w)  \text{ if $T_w \neq \emptyset$}.\\
 \end{cases}\end{split}\]</div>
-<p>Often, the initialization, <span class="math notranslate nohighlight">\(Q_{w0}\)</span>, is a <code class="docutils literal notranslate"><span class="pre">VALUES</span></code> clause.
-The recursion, <span class="math notranslate nohighlight">\(Q_{wu}\)</span>, is specified as a <code class="docutils literal notranslate"><span class="pre">UNION</span></code> or <code class="docutils literal notranslate"><span class="pre">UNION</span> <span class="pre">ALL</span></code> clause that’s syntactically part of the initial <code class="docutils literal notranslate"><span class="pre">VALUES</span></code> clause.
+<p>Note there are two variants of the subquery: Initialization, <span class="math notranslate nohighlight">\(Q_{w0}\)</span>, and the recursion, <span class="math notranslate nohighlight">\(Q_{w*}\)</span>.
+Often the initialization is a <code class="docutils literal notranslate"><span class="pre">VALUES</span></code> clause.
+The recursion, <span class="math notranslate nohighlight">\(Q_{w*}\)</span>, is specified as a <code class="docutils literal notranslate"><span class="pre">UNION</span></code> or <code class="docutils literal notranslate"><span class="pre">UNION</span> <span class="pre">ALL</span></code> clause that’s syntactically part of the initial <code class="docutils literal notranslate"><span class="pre">VALUES</span></code> clause.
 The choice between breadth-first and depth-first traversal of the query results is specified with an <code class="docutils literal notranslate"><span class="pre">ORDER</span> <span class="pre">BY</span></code> clause.
 The default is breadth-first.</p>
 </section>
@@ -276,7 +291,7 @@ There isn’t any SQL-like syntax for these features.</p>
           
         </div>
       </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
         <div class="sphinxsidebarwrapper">
 <h1 class="logo"><a href="index.html">Functional SQL</a></h1>
 
@@ -342,7 +357,7 @@ There isn’t any SQL-like syntax for these features.</p>
       &#169;2024, S.Lott.
       
       |
-      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.3.7</a>
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.4.7</a>
       &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
       
       |

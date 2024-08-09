@@ -6,6 +6,29 @@ functional-SQL
 
 A library to help build SQL-like functionality without the overhead of a database.
 
+See https://slott56.github.io/functional-SQL/_build/html/index.html for the documentation.
+
+
+Some SQL
+
+..  code-block:: SQL
+
+    SELECT n.name, v.c2
+    FROM names_table n, values_table v
+    WHERE n.code = v.c1
+
+Some Python that does the same thing.
+
+..  code-block:: python
+
+    Select(name=lambda cr: cr.n.name, value=lambda cr: cr.v.c2)
+    .from_(n=names_table, v=values_table)
+    .where(lambda cr: cr.n.code == cr.v.c1)
+
+Yes. The Python is longer. Yes it has ``lambda cr: cr.`` scattered around. The Python produces the same results as the SQL query, using essentially the same algorithm.
+You can write Python using the SQL algorithm design pattern.
+And without using a database.
+
 
 ..  |Python| image:: https://img.shields.io/badge/Python-3.12-3776AB.svg?style=flat&logo=python&logoColor=white
     :target: https://www.python.org
